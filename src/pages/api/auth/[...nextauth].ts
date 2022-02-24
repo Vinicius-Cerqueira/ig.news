@@ -5,6 +5,9 @@ import GithubProvider from 'next-auth/providers/github';
 
 import { client } from '../../../services/fauna';
 
+// GITHUB_ID=869bceded8c65edc53e2
+// GITHUB_SECRET=adb804f018e4d379b881c20878e813b5bbb9a5b6
+
 export default NextAuth({
   providers: [
     GithubProvider({
