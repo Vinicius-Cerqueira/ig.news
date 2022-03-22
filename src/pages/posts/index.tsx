@@ -1,8 +1,19 @@
 import { GetStaticProps } from "next";
 import Head from "next/head";
 import styles from "./styles.module.scss";
-import Prismic from "@prismicio/client";
-export default function Posts() {
+import { createClient } from "../../services/prismicio";
+import { RichText } from "prismic-dom";
+
+type Post = {
+  slug: string;
+  title: string;
+  excerpt: string;
+  updatedAt: string;
+};
+interface PostsProps {
+  posts: Post[];
+}
+export default function Posts({ posts }: PostsProps) {
   return (
     <>
       <Head>
@@ -11,37 +22,40 @@ export default function Posts() {
 
       <main className={styles.container}>
         <div className={styles.posts}>
-          <a href="#">
-            <time>12 de Jun de 2018</time>
-            <strong>Integração do Material UI com ReactJS</strong>
-            <p>
-              Algo que acontece com muitos Devs é não ter alguma aptidão ou
-              mesmo não ter tempo hábil para fazer os Designs e Layouts de suas
-              aplicações, mas quem não gosta de um front-end bonitinho?
-            </p>
-          </a>
-
-          <a href="#">
-            <time>12 de Jun de 2018</time>
-            <strong>Integração do Material UI com ReactJS</strong>
-            <p>
-              Algo que acontece com muitos Devs é não ter alguma aptidão ou
-              mesmo não ter tempo hábil para fazer os Designs e Layouts de suas
-              aplicações, mas quem não gosta de um front-end bonitinho?
-            </p>
-          </a>
-
-          <a href="#">
-            <time>12 de Jun de 2018</time>
-            <strong>Integração do Material UI com ReactJS</strong>
-            <p>
-              Algo que acontece com muitos Devs é não ter alguma aptidão ou
-              mesmo não ter tempo hábil para fazer os Designs e Layouts de suas
-              aplicações, mas quem não gosta de um front-end bonitinho?
-            </p>
-          </a>
+          {posts.map((post) => (
+            <a href="#" key={post.slug}>
+              <time>{post.updatedAt}</time>
+              <strong>{post.title}</strong>
+              <p>{post.excerpt}</p>
+            </a>
+          ))}
         </div>
       </main>
     </>
   );
 }
+
+export const getStaticProps: GetStaticProps = async ({ previewData }) => {
+  const client = createClient({ previewData });
+  const rawData = await client.getByType("post");
+  const posts = rawData.results.map((post) => {
+    return {
+      slug: post.uid,
+      title: RichText.asText(post.data.title),
+      excerpt:
+        post.data.content.find((content) => content.type === "paragraph")
+          ?.text ?? "",
+      updatedAt: new Date(post.last_publication_date).toLocaleDateString(
+        "pt-BR",
+        {
+          day: "2-digit",
+          month: "long",
+          year: "numeric",
+        }
+      ),
+    };
+  });
+  return {
+    props: { posts },
+  };
+};
